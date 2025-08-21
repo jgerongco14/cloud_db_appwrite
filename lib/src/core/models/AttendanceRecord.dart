@@ -1,9 +1,10 @@
-import 'package:pocketbase/pocketbase.dart';
+import 'package:appwrite/models.dart' as models;
 
+/// Data model mapped to an Appwrite Document
 class AttendanceRecord {
-  final String id;
+  final String id; // Appwrite document $id
   final String name;
-  final DateTime date;
+  final DateTime date; // Stored as ISO8601 string in Appwrite
   final String status; // 'present' | 'absent'
   final String? note;
 
@@ -15,11 +16,43 @@ class AttendanceRecord {
     this.note,
   });
 
-  factory AttendanceRecord.fromRecord(RecordModel record) => AttendanceRecord(
-    id: record.id,
-    name: record.data['name'] as String,
-    date: DateTime.parse(record.data['date'] as String),
-    status: record.data['status'] as String,
-    note: record.data['note'] as String?,
-  );
+  /// Create from Appwrite Document
+  factory AttendanceRecord.fromDocument(models.Document doc) {
+    final data = doc.data; // Map<String, dynamic>
+    return AttendanceRecord(
+      id: doc.$id,
+      name: (data['name'] ?? '') as String,
+      date: DateTime.parse(
+        (data['date'] ?? DateTime.now().toIso8601String()) as String,
+      ),
+      status: (data['status'] ?? '') as String,
+      note: data['note'] as String?,
+    );
+  }
+
+  /// Convert to a map suitable for Appwrite create/update
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'date': date.toIso8601String(),
+      'status': status,
+      'note': note,
+    };
+  }
+
+  AttendanceRecord copyWith({
+    String? id,
+    String? name,
+    DateTime? date,
+    String? status,
+    String? note,
+  }) {
+    return AttendanceRecord(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      date: date ?? this.date,
+      status: status ?? this.status,
+      note: note ?? this.note,
+    );
+  }
 }

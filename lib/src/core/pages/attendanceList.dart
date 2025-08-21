@@ -1,12 +1,15 @@
-import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
-import 'package:cloud_db/src/core/pages/abstract.dart';
+// ignore_for_file: file_names
+
+import 'package:cloud_db/src/core/controller/AttendanceController.dart';
 import 'package:cloud_db/src/core/pages/attendanceForm.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
 
 class AttendanceListScreen extends StatefulWidget {
-  final IAttendanceRepo repo;
   final DateTime? initialDate;
-  const AttendanceListScreen({super.key, required this.repo, this.initialDate});
+  final AttendanceController ctrl;
+
+  const AttendanceListScreen({super.key, this.initialDate, required this.ctrl});
 
   @override
   State<AttendanceListScreen> createState() => _AttendanceListScreenState();
@@ -23,23 +26,21 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
   }
 
   Future<void> _refresh() async {
-    // just rebuild -> FutureBuilder below will refetch
-    setState(() {});
+    setState(() {}); // triggers FutureBuilder to refetch
   }
 
   void _pickDate() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2000), // wider range, avoids edge cases
+      firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
       initialEntryMode: DatePickerEntryMode.calendarOnly,
     );
     if (picked == null) return;
-
     final d = DateUtils.dateOnly(picked);
     if (!mounted) return;
-    setState(() => _selectedDate = d); // FutureBuilder will refetch
+    setState(() => _selectedDate = d);
   }
 
   void _openCreate() async {
@@ -53,7 +54,7 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
         child: AttendanceForm(
           date: _selectedDate,
           onSave: (name, status, note) async {
-            await widget.repo.create(
+            await widget.ctrl.create(
               name: name,
               date: _selectedDate,
               status: status,
@@ -85,7 +86,7 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
       ),
     );
     if (ok == true) {
-      await widget.repo.delete(r.id);
+      await widget.ctrl.delete(r.id);
       await _refresh();
       return true;
     }
@@ -94,10 +95,10 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final future = widget.repo.list(
+    final future = widget.ctrl.listByDate(
       onDate: _selectedDate,
       name: _searchName,
-    ); // <-- generated here
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -191,7 +192,6 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
                               ),
                             ),
                             title: Text(r.name),
-                            // Segmented toggle + delete icon
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -210,8 +210,8 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
                                   ],
                                   selected: {r.status},
                                   onSelectionChanged: (sel) async {
-                                    await widget.repo.update(
-                                      r.id,
+                                    await widget.ctrl.update(
+                                      id: r.id,
                                       status: sel.first,
                                     );
                                     _refresh();
@@ -233,8 +233,8 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
                                     date: r.date,
                                     existing: r,
                                     onSave: (name, status, note) async {
-                                      await widget.repo.update(
-                                        r.id,
+                                      await widget.ctrl.update(
+                                        id: r.id,
                                         status: status,
                                         note: note,
                                       );

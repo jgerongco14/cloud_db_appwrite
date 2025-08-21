@@ -1,11 +1,12 @@
-import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
+// attendance_form.dart
 import 'package:flutter/material.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
 
 class AttendanceForm extends StatefulWidget {
   final DateTime date;
   final AttendanceRecord? existing;
   final Future<void> Function(String name, String status, String? note) onSave;
+
   const AttendanceForm({
     super.key,
     required this.date,
@@ -49,18 +50,17 @@ class _AttendanceFormState extends State<AttendanceForm> {
         _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
       if (mounted) Navigator.pop(context, true);
-    } on ClientException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.response['message']?.toString() ?? e.toString()),
-        ),
-      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.existing != null;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Form(
@@ -83,8 +83,7 @@ class _AttendanceFormState extends State<AttendanceForm> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameCtrl,
-              readOnly:
-                  isEditing, // prevent accidental change of the primary key-like name when editing
+              readOnly: isEditing, // lock name while editing
               decoration: const InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
