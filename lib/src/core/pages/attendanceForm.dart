@@ -1,4 +1,6 @@
 // attendance_form.dart
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
 

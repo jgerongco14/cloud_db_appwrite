@@ -1,3 +1,5 @@
+// ignore_for_file: body_might_complete_normally_nullable
+
 import 'package:cloud_db/connection/Connection.dart';
 import 'package:cloud_db/src/core/models/AttendanceRecord.dart';
 import 'package:flutter/foundation.dart';
@@ -41,24 +43,28 @@ class AttendanceController extends ChangeNotifier {
     required DateTime date,
     required String status, // 'present' | 'absent'
     String? note,
-    String? documentId, // pass null to auto-generate
-    List<String>? permissions, // optional Appwrite permissions
   }) async {
     try {
       _setLoading(true);
-      final payload = {
-        'name': name,
-        'date': date.toIso8601String(),
-        'status': status,
-        'note': note,
-      };
+      // final payload = {
+      //   'name': name,
+      //   'date': date.toIso8601String(),
+      //   'status': status,
+      //   'note': note,
+      // };
+
+      final documentId = ID.unique(); // Generate unique ID
 
       final doc = await _db.createDocument(
         databaseId: Connection.databaseId,
         collectionId: Connection.collectionId,
-        documentId: documentId ?? ID.unique(),
-        data: payload,
-        permissions: permissions,
+        documentId: documentId.toString(),
+        data: {
+          'name': name,
+          'date': date.toIso8601String(),
+          'status': status,
+          'note': note,
+        },
       );
 
       final record = AttendanceRecord.fromDocument(doc);
@@ -68,6 +74,9 @@ class AttendanceController extends ChangeNotifier {
       return record;
     } catch (e) {
       _setError(e.toString());
+      if (kDebugMode) {
+        print('Error creating attendance record: $e');
+      }
       return null;
     } finally {
       _setLoading(false);
@@ -155,7 +164,10 @@ class AttendanceController extends ChangeNotifier {
 
     final queries = <String>[
       Query.between('date', start, end),
-      if (name != null && name.trim().isNotEmpty) Query.search('name', name),
+      if (name != null && name.trim().isNotEmpty)
+        (name.trim().length >= 3
+            ? Query.search('name', name.trim())
+            : Query.equal('name', name.trim())),
       if (orderByNameAsc) Query.orderAsc('name') else Query.orderDesc('name'),
     ];
 

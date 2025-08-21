@@ -39,7 +39,6 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
     );
     if (picked == null) return;
     final d = DateUtils.dateOnly(picked);
-    if (!mounted) return;
     setState(() => _selectedDate = d);
   }
 
@@ -126,9 +125,8 @@ class _AttendanceListScreenState extends State<AttendanceListScreen> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (v) {
-                setState(
-                  () => _searchName = v.trim().isEmpty ? null : v.trim(),
-                );
+                final t = v.trim();
+                setState(() => _searchName = t.isEmpty ? null : t);
               },
             ),
           ),
